@@ -1,7 +1,7 @@
 <?php
  
 $this->device_types['wemos_relay'] = array(
-        'TITLE'=>'WEMOS RELAY',
+        'TITLE'=>LANG_SWemosRelays_STRUCTURE_NAME,
         'PARENT_CLASS'=>'SDevices',
         'CLASS'=>'SWemosRelays',
         'PROPERTIES'=>array(
