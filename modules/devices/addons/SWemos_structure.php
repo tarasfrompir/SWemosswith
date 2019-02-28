@@ -18,8 +18,8 @@ $this->device_types['wemos_relay'] = array(
                     ',gates='.LANG_DEVICES_LOADTYPE_GATES.
                     ',power='.LANG_DEVICES_LOADTYPE_POWER),
             'icon'=>array('DESCRIPTION'=>LANG_IMAGE,'_CONFIG_TYPE'=>'style_image','_CONFIG_HELP'=>'SdIcon'),
-            'ipaddres'=>array('DESCRIPTION'=>'IP адрес устройства', '_CONFIG_TYPE'=>'text', 'KEEP_HISTORY'=>0, 'DATA_KEY'=>1),
-            'CONTROLADDRESS'=>array('DESCRIPTION'=>'Адрес управления устройством', 'KEEP_HISTORY'=>0, 'DATA_KEY'=>1),
+            'ipaddress'=>array('DESCRIPTION'=>'IP адрес устройства', '_CONFIG_TYPE'=>'text', 'KEEP_HISTORY'=>0, 'DATA_KEY'=>1),
+            'UPNPADDRESS'=>array('DESCRIPTION'=>'Адрес управления устройством', 'KEEP_HISTORY'=>0, 'DATA_KEY'=>1),
 		
             ),
         'METHODS'=>array(
