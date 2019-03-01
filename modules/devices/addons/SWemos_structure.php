@@ -20,6 +20,7 @@ $this->device_types['wemos_relay'] = array(
             'icon'=>array('DESCRIPTION'=>LANG_IMAGE,'_CONFIG_TYPE'=>'style_image','_CONFIG_HELP'=>'SdIcon'),
             'ipaddress'=>array('DESCRIPTION'=>'IP адрес устройства', '_CONFIG_TYPE'=>'text', 'KEEP_HISTORY'=>0, 'DATA_KEY'=>1),
             'UPNPADDRESS'=>array('DESCRIPTION'=>'Адрес управления устройством', 'KEEP_HISTORY'=>0, 'DATA_KEY'=>1),
+            'UUID'=>array('DESCRIPTION'=>'ИД устройства', 'KEEP_HISTORY'=>0, 'DATA_KEY'=>1),
 		
             ),
         'METHODS'=>array(
