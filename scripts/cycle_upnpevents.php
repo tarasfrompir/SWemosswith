@@ -17,17 +17,18 @@ DebMes ('Start');
 // еще обязательное свойство для них ipaddress
 // впредь создаем обязательно такое поле для УПНП устройства
 $devices = get_all_upnp_devices();
-//DebMes (serialize ($devices));
+//echo (serialize ($devices));
+
 
 // проверяем устройства на online i pravilnost UPNPADDRESS
 $controladdress =array();
 foreach( $devices as $device ) {
-	$i++;
-	$out = chek_upnp_address($device);
-    if ($out) {
-		$controladdress[$i] = getGlobal($device.'.UPNPADDRESS');
-	} 
+	$device_ip = gg($device.'.ipaddress');
+	$out = search_controlURL($device_ip, $device);
+    $controladdress = array_merge($controladdress, $out);
 }
+//echo (serialize ($controladdress));
+
 
 // podpisivaem ustroystve na sobitiya vhodit massiv adresov
 // vihodit resultat podpiska na sobitiya
@@ -35,13 +36,18 @@ foreach( $devices as $device ) {
 $subscribs = array();
 // poluchem polya
 foreach( $controladdress as $address ) {
+    //echo ($address);
     $out = get_subscription_filds($address);
     $subscribs = array_merge($subscribs, $out);
-	DebMes($address);
 }
+//echo (serialize ($subscribs));
+
+
 // subscribe to events
 foreach( $subscribs as $field ) {
     subscribe($field);
+	setGlobal($field['device'].'.UPNPUUID',$field['uuid']);
+	echo (serialize ($field));
 }
 
 // main cycle
@@ -71,7 +77,7 @@ while (1) {
 		$uuid_device = str_replace('/', "", $uuid_device);
 		$uuid_device = substr($uuid_device, 0, 41);
         //vibiraem ustroystvo
-        $device_notified = getObjectsByProperty('UUID','=',$uuid_device);
+        $device_notified = getObjectsByProperty('UPNPUUID','=',$uuid_device);
 		Debmes ('imya ustroystva'.$device_notified[0]);
 		
 		// berem telo soobsheniya
@@ -119,13 +125,76 @@ DebMes("Unexpected close of cycle: " . basename(__FILE__));
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////section for internal function////////////////////////////////////////////
 
+// берем все обьекты со свойством UPNPUUID (это показатель того что это УПНП устройство)
+// впредь создаем обязательно такое поле для УПНП устройства
+function get_all_upnp_devices() {
+//$out = getObjectsByProperty('UPNPUUID');
+$out = array();
+$classes=SQLSelect("SELECT * FROM properties WHERE TITLE='UPNPUUID'");
+foreach( $classes as $class ) {
+	if ($class['OBJECT_ID']) {
+		$object=SQLSelectOne("SELECT * FROM objects WHERE ID='".$class['OBJECT_ID']."'");
+		$out [$object['ID']] = $object['TITLE'];
+	} else if ($class['CLASS_ID']) {
+        $objects=SQLSelect("SELECT * FROM objects WHERE CLASS_ID='".$class['CLASS_ID']."'");
+	    foreach( $objects as $object ) {
+	         $out [$object['ID']] = $object['TITLE'];
+	    }
+	}
+}
+return $out;
+}
+
+// функция получения CONTROL_ADDRESS при его отсутствии или его ге правильности
+function search_controlURL($ip_addres = '255.255.255.255',$device) {
+    //create the socket
+    $socket = socket_create(AF_INET, SOCK_DGRAM, 0);
+    socket_set_option($socket, SOL_SOCKET, SO_BROADCAST, true);
+    //all
+    $request  = 'M-SEARCH * HTTP/1.1'."\r\n";
+    $request .= 'HOST: 239.255.255.250:1900'."\r\n";
+    $request .= 'MAN: "ssdp:discover"'."\r\n";
+    $request .= 'MX: 2'."\r\n";
+    $request .= 'ST: ssdp:all'."\r\n";
+    $request .= 'USER-AGENT: Majordomo/ver-x.x UDAP/2.0 Win/7'."\r\n";
+    $request .= "\r\n";
+        
+    socket_sendto($socket, $request, strlen($request), 0, $ip_addres, 1900);
+	$response = array();
+    // send the data from socket
+    socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array('sec'=>'2', 'usec'=>'128'));
+    do {
+        $buf = null;
+        if (($len = @socket_recvfrom($socket, $buf, 2048, 0, $ip, $port)) == -1) {
+            echo "socket_read() failed: " . socket_strerror(socket_last_error()) . "\n";
+        }
+        if(!is_null($buf)){
+            $messages = explode("\r\n", $buf);
+			foreach( $messages as $row ) {
+				$i++;				
+				if( stripos( $row, 'loca') === 0 ) {
+                    $answer = str_ireplace("location:", "", $row);
+					$answer = trim($answer);
+					if ($answer_old != $answer) {
+  				        $response[$i]['address']= $answer;
+   				        $response[$i]['device_name']= $device;	
+				    	$answer_old = $answer; 
+					}
+				}
+				
+            }
+        }
+    } while(!is_null($buf));
+    socket_close($socket);
+    return $response;
+}
 
 // функция получения полей для событий на устройстве 
-function get_subscription_filds($upnpaddress) {
+function get_subscription_filds($device) {
     $out = array();
     // получаем XML
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $upnpaddress);
+    curl_setopt($ch, CURLOPT_URL, $device['address']);
     curl_setopt($ch, CURLOPT_HEADER, 0);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     $response = curl_exec($ch);
@@ -146,23 +215,23 @@ function get_subscription_filds($upnpaddress) {
 		$link = $row->nodeValue;
 		if (!in_array($link, $out)) {
             $out[$i]['value'] = $link;
-            $out[$i]['controlladdress'] = $upnpaddress;
-			$out[$i]['callback'] = $uuid[0]->nodeValue;
+            $out[$i]['controlladdress'] = $device['address'];
+			$out[$i]['uuid'] = $uuid[0]->nodeValue;
+			$out[$i]['device'] = $device['device_name'];
 		}
     }
     return $out;
 }
-	
-	
+
 // function for sibscribe to device event
-function subscribe($row='') {
-    $parts=parse_url($row['controlladdress']);
+function subscribe($fields='') {
+    $parts=parse_url($fields['controlladdress']);
     $fp = fsockopen($parts['host'],isset($parts['port'])?$parts['port']:80,$errno, $errstr, 30);
-    $request = 'SUBSCRIBE '.$row['value'].' HTTP/1.1'."\r\n";
+    $request = 'SUBSCRIBE '.$fields['value'].' HTTP/1.1'."\r\n";
     $request .= 'NT: upnp:event'."\r\n";
     $request .= 'TIMEOUT: Second-600'."\r\n";
     $request .= 'HOST: '.$parts['host'].':'.$parts['port']."\r\n";
-    $request .= 'CALLBACK: <http://'.getLocalIp().':54321/'.$row['callback'].'>'."\r\n";
+    $request .= 'CALLBACK: <http://'.getLocalIp().':54321/'.$fields['uuid'].'>'."\r\n";
     $request .= 'Content-Length: 0'."\r\n\r\n";
 
     fwrite($fp, $request);
@@ -176,35 +245,13 @@ function subscribe($row='') {
     fclose($fp);
 	return $out;
 }
+///////////////////
 
 
-// берем все обьекты со свойством UPNPUUID (это показатель того что это УПНП устройство)
-// впредь создаем обязательно такое поле для УПНП устройства
-function get_all_upnp_devices() {
-//$out = getObjectsByProperty('UPNPUUID');
-$out = array();
-$classes=SQLSelect("SELECT * FROM properties WHERE TITLE='UPNPUUID'");
-foreach( $classes as $class ) {
-	if ($class['OBJECT_ID']) {
-		$object=SQLSelectOne("SELECT * FROM objects WHERE ID='".$class['OBJECT_ID']."'");
-		$out [$object['ID']] = $object['TITLE'];
-	} else if ($class['CLASS_ID']) {
-        $objects=SQLSelect("SELECT * FROM objects WHERE CLASS_ID='".$class['CLASS_ID']."'");
-	    foreach( $objects as $object ) {
-	         $out [$object['ID']] = $object['TITLE'];
-	    }
-	}
-}
-return $out;
+	
+	
 
-// poluchem polya
-foreach( $controladdress as $address ) {
-    $out = get_subscription_filds($address);
-    $subscribs = array_merge($subscribs, $out);
-	DebMes($address);
-}
-return $out;
-}
+
 
 // проверем UPNPADDRESS and UUID и если он не правильный то меняем его в свойствах устройства
 function chek_upnp_address($device) {
@@ -243,44 +290,7 @@ function chek_upnp_address($device) {
 		// berem polya na kotorie mogna podpisatsya
 		$uuid = $doc->getElementsByTagName('UDN');
 		$uuid = $uuid[0]->nodeValue;
-		setGlobal($device.'.UUID', $uuid);
+		setGlobal($device.'.UPNPUUID', $uuid);
 	}
     return true;
-}
-
-    // функция получения CONTROL_ADDRESS при его отсутствии или его ге правильности
-function search_UPNPADDRESS($ip_addres = '255.255.255.255') {
-    //create the socket
-    $socket = socket_create(AF_INET, SOCK_DGRAM, 0);
-    socket_set_option($socket, SOL_SOCKET, SO_BROADCAST, true);
-    //all
-    $request  = 'M-SEARCH * HTTP/1.1'."\r\n";
-    $request .= 'HOST: 239.255.255.250:1900'."\r\n";
-    $request .= 'MAN: "ssdp:discover"'."\r\n";
-    $request .= 'MX: 2'."\r\n";
-    $request .= 'ST: ssdp:all'."\r\n";
-    $request .= 'USER-AGENT: Majordomo/ver-x.x UDAP/2.0 Win/7'."\r\n";
-    $request .= "\r\n";
-        
-    socket_sendto($socket, $request, strlen($request), 0, $ip_addres, 1900);
-    // send the data from socket
-    socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array('sec'=>'2', 'usec'=>'128'));
-    do {
-        $buf = null;
-        if (($len = @socket_recvfrom($socket, $buf, 2048, 0, $ip, $port)) == -1) {
-            echo "socket_read() failed: " . socket_strerror(socket_last_error()) . "\n";
-        }
-        if(!is_null($buf)){
-            $messages = explode("\r\n", $buf);
-                foreach( $messages as $row ) {
-                    if( stripos( $row, 'loca') === 0 ) {
-                        $response = str_ireplace( 'location: ', '', $row );
-						break;
-                    }
-                }
-        }
-    } while(!is_null($buf));
-    socket_close($socket);
-    $response = str_ireplace("Location:", "", $response);
-    return $response;
 }
