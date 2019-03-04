@@ -65,7 +65,7 @@ while (1) {
 		// get answer
 		$spawn = socket_accept($socket) or die("Could not accept incoming connection\n");   
 		// read client 
-		if ($input = @socket_read($spawn, 2048) == -1) {
+		if ($input = @socket_read($spawn, 8192) == -1) {
                 echo "socket_read() failed: " . socket_strerror(socket_last_error()) . "\n";
             }
 		//$input = socket_read($spawn, 4096) or die("Could not read input\n");
