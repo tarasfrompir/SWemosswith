@@ -60,7 +60,7 @@ while (1) {
 	
 		// get answer
 		$spawn = socket_accept($socket) or die("Could not accept incoming connection\n");   
-		// read client input
+		// read client i
 		$input = socket_read($spawn, 2048) or die("Could not read input\n");
 		socket_close($spawn);
 		//DebMes('telo  - '.$input);
