@@ -52,8 +52,8 @@ foreach( $subscribs as $field ) {
 
     // create socket
     $socket = socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create socket\n");
-    socket_bind($socket, getLocalIp(), 54321) or die("Could not bind to socket\n");
-    socket_listen($socket, 1024) or die("Could not set up socket listener\n");
+    socket_bind($socket, getLocalIp(), 54345) or die("Could not bind to socket\n");
+    socket_listen($socket, 8096) or die("Could not set up socket listener\n");
 
 	
 while (1) {
@@ -65,12 +65,12 @@ while (1) {
 		// get answer
 		$spawn = socket_accept($socket) or die("Could not accept incoming connection\n");   
 		// read client 
-		if ($input = @socket_read($spawn, 8192) == -1) {
-                echo "socket_read() failed: " . socket_strerror(socket_last_error()) . "\n";
-            }
-		//$input = socket_read($spawn, 4096) or die("Could not read input\n");
+		DebMes ('spawn -'.$spawn);
+
+		$input = socket_read($spawn, 8096) or die("Could not read input\n");
 		DebMes('telo  - '.$input);
 		socket_close($spawn);	
+
 		
 		// ishem imya ustroystva oni otragautsya v notyfy
 		$name_device = substr($input, strpos($input, "NOTIFY") + 6);
@@ -228,7 +228,7 @@ function subscribe($fields='') {
     $request .= 'NT: upnp:event'."\r\n";
     $request .= 'TIMEOUT: Second-5'."\r\n";
     $request .= 'HOST: '.$parts['host'].':'.$parts['port']."\r\n";
-    $request .= 'CALLBACK: <http://'.getLocalIp().':54321/'.$fields['device'].'>'."\r\n";
+    $request .= 'CALLBACK: <http://'.getLocalIp().':54345/'.$fields['device'].'>'."\r\n";
     $request .= 'Content-Length: 0'."\r\n\r\n";
 DebMes ($request);
     fwrite($fp, $request);
