@@ -16,7 +16,7 @@ DebMes ('Start');
 // берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
 // впредь создаем обязательно такое поле для УПНП устройства
 $devices = get_all_upnp_devices();
-DebMes (serialize ($devices));
+//DebMes (serialize ($devices));
 
 
 // проверяем устройства на online i pravilnost UPNPADDRESS
@@ -53,7 +53,7 @@ foreach( $subscribs as $field ) {
     // create socket
     $socket = socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create socket\n");
     socket_bind($socket, getLocalIp(), 54345) or die("Could not bind to socket\n");
-    socket_listen($socket, 8096) or die("Could not set up socket listener\n");
+    socket_listen($socket, 10240) or die("Could not set up socket listener\n");
 
 	
 while (1) {
@@ -65,17 +65,15 @@ while (1) {
 		// get answer
 		$spawn = socket_accept($socket) or die("Could not accept incoming connection\n");   
 		// read client 
-		DebMes ('spawn -'.$spawn);
-
-		$input = socket_read($spawn, 8096) or die("Could not read input\n");
-		DebMes('telo  - '.$input);
+		$input = @socket_read($spawn, 10240);
+		//DebMes('telo  - '.$input);
 		socket_close($spawn);	
 
 		
 		// ishem imya ustroystva oni otragautsya v notyfy
 		$name_device = substr($input, strpos($input, "NOTIFY") + 6);
 		$name_device = substr($name_device, 0, strpos($name_device, "HTTP/1.1"));
-        $name_device = str_ireplace("/", "", $name_device);
+                $name_device = str_ireplace("/", "", $name_device);
 		$name_device = trim($name_device);
 		DebMes ('notyfy get name '.$name_device);
 		
@@ -230,7 +228,7 @@ function subscribe($fields='') {
     $request .= 'HOST: '.$parts['host'].':'.$parts['port']."\r\n";
     $request .= 'CALLBACK: <http://'.getLocalIp().':54345/'.$fields['device'].'>'."\r\n";
     $request .= 'Content-Length: 0'."\r\n\r\n";
-DebMes ($request);
+
     fwrite($fp, $request);
     while (!feof($fp)) {
        $answer = fgets ($fp,128);
