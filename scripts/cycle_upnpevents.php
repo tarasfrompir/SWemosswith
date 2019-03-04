@@ -13,7 +13,7 @@ $ctl = new control_modules();
 echo date("H:i:s") . " running " . basename(__FILE__) . PHP_EOL;
 
 DebMes ('Start');
-// берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
+// берем все обьекты со свойством UPNPUUID (это показатель того что это УПНП устройство)
 // еще обязательное свойство для них ipaddress
 // впредь создаем обязательно такое поле для УПНП устройства
 $devices = get_all_upnp_devices();
@@ -178,12 +178,12 @@ function subscribe($row='') {
 }
 
 
-// берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
+// берем все обьекты со свойством UPNPUUID (это показатель того что это УПНП устройство)
 // впредь создаем обязательно такое поле для УПНП устройства
 function get_all_upnp_devices() {
-//$out = getObjectsByProperty('UPNPADDRESS');
+//$out = getObjectsByProperty('UPNPUUID');
 $out = array();
-$classes=SQLSelect("SELECT * FROM properties WHERE TITLE='UPNPADDRESS'");
+$classes=SQLSelect("SELECT * FROM properties WHERE TITLE='UPNPUUID'");
 foreach( $classes as $class ) {
 	if ($class['OBJECT_ID']) {
 		$object=SQLSelectOne("SELECT * FROM objects WHERE ID='".$class['OBJECT_ID']."'");
