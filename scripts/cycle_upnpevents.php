@@ -13,25 +13,24 @@ $ctl = new control_modules();
 echo date("H:i:s") . " running " . basename(__FILE__) . PHP_EOL;
 
 DebMes ('Start');
-// берем все обьекты со свойством UPNPUUID (это показатель того что это УПНП устройство)
-// еще обязательное свойство для них ipaddress
+// берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
 // впредь создаем обязательно такое поле для УПНП устройства
 $devices = get_all_upnp_devices();
-//echo (serialize ($devices));
+DebMes (serialize ($devices));
 
 
 // проверяем устройства на online i pravilnost UPNPADDRESS
 $controladdress =array();
 foreach( $devices as $device ) {
-	$device_ip = gg($device.'.ipaddress');
+	$device_ip = gg($device.'.UPNPADDRESS');
 	$out = search_controlURL($device_ip, $device);
-    $controladdress = array_merge($controladdress, $out);
+	if (!in_array ($out,$controladdress)) {
+        $controladdress = array_merge($controladdress, $out);
+	}
 }
-//echo (serialize ($controladdress));
+DebMes (serialize ($controladdress));
 
 
-// podpisivaem ustroystve na sobitiya vhodit massiv adresov
-// vihodit resultat podpiska na sobitiya
 // get subscriptions fields
 $subscribs = array();
 // poluchem polya
@@ -40,14 +39,14 @@ foreach( $controladdress as $address ) {
     $out = get_subscription_filds($address);
     $subscribs = array_merge($subscribs, $out);
 }
-//echo (serialize ($subscribs));
+//DebMes (serialize ($subscribs));
 
 
 // subscribe to events
 foreach( $subscribs as $field ) {
     subscribe($field);
 	setGlobal($field['device'].'.UPNPUUID',$field['uuid']);
-	echo (serialize ($field));
+    DebMes (serialize ($field));
 }
 
 // main cycle
@@ -69,15 +68,16 @@ while (1) {
 		// read client i
 		$input = socket_read($spawn, 2048) or die("Could not read input\n");
 		socket_close($spawn);
-		//DebMes('telo  - '.$input);
+		DebMes('telo  - '.$input);
 		
 		// ishem uuid ustroystva oni otragautsya v notyfy
-		$uuid_device = substr($input, strpos($input, "NOTIFY") + 6);
-		$uuid_device = trim($uuid_device);
-		$uuid_device = str_replace('/', "", $uuid_device);
-		$uuid_device = substr($uuid_device, 0, 41);
+		$name_device = substr($input, strpos($input, "NOTIFY") + 6);
+		$name_device = substr($name_device, 0, strpos($name_device, "HTTP/1.1"));
+        $name_device = str_ireplace("/", "", $name_device);
+		$name_device = trim($name_device);
+		DebMes ('notyfy get name '.$name_device);
         //vibiraem ustroystvo
-        $device_notified = getObjectsByProperty('UPNPUUID','=',$uuid_device);
+        $device_notified = getObjectsByProperty('TITLE','=',$name_device);
 		Debmes ('imya ustroystva'.$device_notified[0]);
 		
 		// berem telo soobsheniya
@@ -125,12 +125,12 @@ DebMes("Unexpected close of cycle: " . basename(__FILE__));
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////section for internal function////////////////////////////////////////////
 
-// берем все обьекты со свойством UPNPUUID (это показатель того что это УПНП устройство)
+// берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
 // впредь создаем обязательно такое поле для УПНП устройства
 function get_all_upnp_devices() {
-//$out = getObjectsByProperty('UPNPUUID');
+//$out = getObjectsByProperty('UPNPADDRESS');
 $out = array();
-$classes=SQLSelect("SELECT * FROM properties WHERE TITLE='UPNPUUID'");
+$classes=SQLSelect("SELECT * FROM properties WHERE TITLE='UPNPADDRESS'");
 foreach( $classes as $class ) {
 	if ($class['OBJECT_ID']) {
 		$object=SQLSelectOne("SELECT * FROM objects WHERE ID='".$class['OBJECT_ID']."'");
@@ -175,10 +175,11 @@ function search_controlURL($ip_addres = '255.255.255.255',$device) {
 				if( stripos( $row, 'loca') === 0 ) {
                     $answer = str_ireplace("location:", "", $row);
 					$answer = trim($answer);
-					if ($answer_old != $answer) {
+					$out['address']= $answer;
+   				    $out['device_name']= $device;	
+					if ((!in_array ($out,$response))) {
   				        $response[$i]['address']= $answer;
    				        $response[$i]['device_name']= $device;	
-				    	$answer_old = $answer; 
 					}
 				}
 				
@@ -205,7 +206,6 @@ function get_subscription_filds($device) {
     //DebMes($response);
 	// berem polya na kotorie mogna podpisatsya
     $subscribs = $doc->getElementsByTagName('eventSubURL');
-	$uuid = $doc->getElementsByTagName('UDN');
     if (!$subscribs){ 
 	    return false;
 	}
@@ -216,7 +216,6 @@ function get_subscription_filds($device) {
 		if (!in_array($link, $out)) {
             $out[$i]['value'] = $link;
             $out[$i]['controlladdress'] = $device['address'];
-			$out[$i]['uuid'] = $uuid[0]->nodeValue;
 			$out[$i]['device'] = $device['device_name'];
 		}
     }
@@ -231,9 +230,9 @@ function subscribe($fields='') {
     $request .= 'NT: upnp:event'."\r\n";
     $request .= 'TIMEOUT: Second-600'."\r\n";
     $request .= 'HOST: '.$parts['host'].':'.$parts['port']."\r\n";
-    $request .= 'CALLBACK: <http://'.getLocalIp().':54321/'.$fields['uuid'].'>'."\r\n";
+    $request .= 'CALLBACK: <http://'.getLocalIp().':54321/'.$fields['device'].'>'."\r\n";
     $request .= 'Content-Length: 0'."\r\n\r\n";
-
+DebMes ($request);
     fwrite($fp, $request);
     while (!feof($fp)) {
        $answer = fgets ($fp,128);
@@ -246,51 +245,3 @@ function subscribe($fields='') {
 	return $out;
 }
 ///////////////////
-
-
-	
-	
-
-
-
-// проверем UPNPADDRESS and UUID и если он не правильный то меняем его в свойствах устройства
-function chek_upnp_address($device) {
-	$upnpaddress = getGlobal($device.'.UPNPADDRESS');
-	$ip = getGlobal($device.'.ipaddress');
-	
-	// проверяем онлайн ли устройство
-	if (!ping($ip)) {
-		return false;
-	}
-	// proveryaem na pravilnost upnp adresa
-    // получаем XML
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $upnpaddress);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    $response = curl_exec($ch);
-    // proverka na otvet
-    $retcode = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-	// esli ne получили ответа то контрол адресс не правильный
-	if ($retcode!=200) {
-		// berem noviy adres upnp nekotorie menyaut ih
-		$upnpaddress = search_UPNPADDRESS($ip);		
-		setGlobal($device.'.UPNPADDRESS', $upnpaddress);
-		// proveryaem na pravilnost upnp adresa
-        // получаем XML
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $upnpaddress);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $response = curl_exec($ch);
-        // создаем хмл документ
-	    $doc = new \DOMDocument();
-		$doc->loadXML($response);
-		// berem polya na kotorie mogna podpisatsya
-		$uuid = $doc->getElementsByTagName('UDN');
-		$uuid = $uuid[0]->nodeValue;
-		setGlobal($device.'.UPNPUUID', $uuid);
-	}
-    return true;
-}
