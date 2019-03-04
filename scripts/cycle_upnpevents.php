@@ -28,7 +28,7 @@ foreach( $devices as $device ) {
         $controladdress = array_merge($controladdress, $out);
 	}
 }
-DebMes (serialize ($controladdress));
+//DebMes (serialize ($controladdress));
 
 
 // get subscriptions fields
@@ -45,8 +45,7 @@ foreach( $controladdress as $address ) {
 // subscribe to events
 foreach( $subscribs as $field ) {
     subscribe($field);
-	setGlobal($field['device'].'.UPNPUUID',$field['uuid']);
-    DebMes (serialize ($field));
+    //DebMes (serialize ($field));
 }
 
 // main cycle
@@ -65,26 +64,26 @@ while (1) {
 	
 		// get answer
 		$spawn = socket_accept($socket) or die("Could not accept incoming connection\n");   
-		// read client i
-		$input = socket_read($spawn, 2048) or die("Could not read input\n");
-		socket_close($spawn);
+		// read client 
+		if ($input = @socket_read($spawn, 2048) == -1) {
+                echo "socket_read() failed: " . socket_strerror(socket_last_error()) . "\n";
+            }
+		//$input = socket_read($spawn, 4096) or die("Could not read input\n");
 		DebMes('telo  - '.$input);
+		socket_close($spawn);	
 		
-		// ishem uuid ustroystva oni otragautsya v notyfy
+		// ishem imya ustroystva oni otragautsya v notyfy
 		$name_device = substr($input, strpos($input, "NOTIFY") + 6);
 		$name_device = substr($name_device, 0, strpos($name_device, "HTTP/1.1"));
         $name_device = str_ireplace("/", "", $name_device);
 		$name_device = trim($name_device);
 		DebMes ('notyfy get name '.$name_device);
-        //vibiraem ustroystvo
-        $device_notified = getObjectsByProperty('TITLE','=',$name_device);
-		Debmes ('imya ustroystva'.$device_notified[0]);
 		
 		// berem telo soobsheniya
 		// regem zagolovki
 		$input = substr($input, strpos($input, "\r\n\r\n") + 4);
 
-		
+		if (strlen($input)>0){
 	    // создаем хмл документ
         $doc = new \DOMDocument();
         $doc->loadXML($input);
@@ -101,11 +100,10 @@ while (1) {
 			  $f_name='status' ;
 			}
 			if ($field AND $value) {
-			  setGlobal($device_notified[0].'.'.$f_name, $value);
+			  setGlobal($name_device.'.'.$f_name, $value);
 			}
         }
-
-         $subscribs = $doc->getElementsByTagName('eventSubURL');
+		}
     }       
       
 
