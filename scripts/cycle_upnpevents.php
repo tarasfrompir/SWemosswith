@@ -97,24 +97,14 @@ DebMes("Unexpected close of cycle: " . basename(__FILE__));
 // ////////////////////section for internal function////////////////////////////////////////////
 // берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
 // впредь создаем обязательно такое поле для УПНП устройства
-function get_all_upnp_devices()
-{
-    // $out = getObjectsByProperty('UPNPADDRESS');
-    $out = array();
-    $classes = SQLSelect("SELECT * FROM properties WHERE TITLE='UPNPADDRESS'");
-    foreach($classes as $class) {
-        if ($class['OBJECT_ID']) {
-            $object = SQLSelectOne("SELECT * FROM objects WHERE ID='" . $class['OBJECT_ID'] . "'");
-            $out[$object['ID']] = $object['TITLE'];
-        }
-        else if ($class['CLASS_ID']) {
-            $objects = SQLSelect("SELECT * FROM objects WHERE CLASS_ID='" . $class['CLASS_ID'] . "'");
-            foreach($objects as $object) {
-                $out[$object['ID']] = $object['TITLE'];
-            }
-        }
-    }
-    return $out;
+function get_all_upnp_devices() {
+$out = array();
+$sql = "SELECT ID, TITLE FROM objects where ID in (SELECT OBJECT_ID FROM properties Where TITLE ='UPNPADDRESS') or CLASS_ID in (SELECT CLASS_ID FROM properties Where TITLE ='UPNPADDRESS')";
+$objects=SQLSelect($sql);
+foreach( $objects as $object ) {
+    $out [$object['ID']] = $object['TITLE'];
+   }
+return $out;
 }
 // функция получения CONTROL_ADDRESS при его отсутствии или его ге правильности
 function search_controlURL($ip_addres = '255.255.255.255', $device)
