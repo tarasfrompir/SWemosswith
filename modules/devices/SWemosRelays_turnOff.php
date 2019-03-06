@@ -1,7 +1,7 @@
 <?php
 
 require_once(dirname(__FILE__)."/classes_for_addons/Wemosswitch.php");
-$adress = $this->getProperty("ipaddress");
+$adress = $this->getProperty("UPNPADDRESS");
 $remote = new Wemosswitch($adress);
 $result = $remote->off();
 echo ($result);
