@@ -45,43 +45,74 @@ $socket = socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create socket
 socket_bind($socket, getLocalIp() , 54345) or die("Could not bind to socket\n");
 socket_listen($socket, 10240) or die("Could not set up socket listener\n");
 while (1) {
-    if (time() - $checked_time > 10) {
+    if (time() - $checked_time > 6*60) {
         $checked_time = time();
         setGlobal((str_replace('.php', '', basename(__FILE__))) . 'Run', time() , 1);
-    }
-    // get answer
-    $spawn = socket_accept($socket) or die("Could not accept incoming connection\n");
-    // read client
-    $input = @socket_read($spawn, 10240);
-    //DebMes('telo  - ' . $input);
-    socket_close($spawn);
-    // ishem imya ustroystva oni otragautsya v notyfy
-    $name_device = substr($input, strpos($input, "NOTIFY") + 6);
-    $name_device = substr($name_device, 0, strpos($name_device, "HTTP/1.1"));
-    $name_device = str_ireplace("/", "", $name_device);
-    $name_device = trim($name_device);
-    DebMes('notyfy get name ' . $name_device);
-    // berem telo soobsheniya
-    // regem zagolovki
-    $input = substr($input, strpos($input, "\r\n\r\n") + 4);
-    if (strlen($input) > 0) {
-        // создаем хмл документ
-        $doc = new DOMDocument();
-        $doc->loadXML($input);
-        // poluchem spisok elementov
-        $xpath = new DOMXpath($doc);
-        $nodes = $xpath->query('//*');
-        // berem ih znacheniya
-        foreach($nodes as $node) {
-            $f_name = $node->nodeName;
-            $field = $doc->getElementsByTagName($f_name) [0];
-            $value = $field->nodeValue;
-            // заменяем для виключателя
-            if ($f_name == 'BinaryState') {
-                $f_name = 'status';
-            }
-            if ($field AND $value) {
-                setGlobal($name_device . '.' . $f_name, $value);
+
+        // get answer
+        $spawn = socket_accept($socket) or die("Could not accept incoming connection\n");
+        // read client
+        $input = @socket_read($spawn, 10240);
+    
+        socket_close($spawn);
+        // ishem imya ustroystva oni otragautsya v notyfy
+        $name_device = substr($input, strpos($input, "NOTIFY") + 6);
+        $name_device = substr($name_device, 0, strpos($name_device, "HTTP/1.1"));
+        $name_device = str_ireplace("/", "", $name_device);
+        $name_device = trim($name_device);
+        DebMes('notyfy get name ' . $name_device);
+        // berem telo soobsheniya
+        // regem zagolovki
+        $input = substr($input, strpos($input, "\r\n\r\n") + 4);
+    
+        // преобразовываем дочерние обьекты
+        // add \r\n
+        $input = str_ireplace("/&gt;", "/&gt;\r\n", $input);
+        $input = str_ireplace("&gt;&lt;", "&gt;\r\n&lt;", $input);
+    
+       // preobrazoval vutrenniye polya
+        $input = preg_replace('/(&lt;)(.*) val="(.*)("\/&gt;)/', '<$2>$3</$2>', $input); 
+        // ubiraem ostachi kavichek
+        $input = str_ireplace("&gt;", ">", $input);
+        $input = str_ireplace("&lt;", "<", $input);
+        // remontiruem ostachu poley
+        $input = preg_replace('/(<)(.*) val="(.*)(">)/', '<$2>$3', $input); 
+    
+    
+        // remontiruem volume svoystvo
+        $input = preg_replace('/<Volume (.*)="(.*)">(.*)<\/Volume channel="(.*)">/', '<Volume_$2>$3</Volume_$2>', $input);    
+        // remontiruem Mute svoystvo
+        $input = preg_replace('/<Mute (.*)="(.*)">(.*)<\/Mute channel="(.*)">/', '<Mute_$2>$3</Mute_$2>', $input); 
+    
+        // ubiraem \r\n  obyazatelno v konce
+        $input = str_ireplace("\r\n", "", $input);  
+    
+        //DebMes('telo  - ' . $input);   
+    
+        if (strlen($input) > 0) {
+            // создаем хмл документ
+            $doc = new DOMDocument();
+            $doc->loadXML($input);
+            
+            // poluchem spisok elementov
+            $xpath = new DOMXpath($doc);
+            $nodes = $xpath->query('//*');
+            // berem ih znacheniya
+            foreach($nodes as $node) {
+                $f_name = $node->nodeName;
+                $field = $doc->getElementsByTagName($f_name) [0];
+                $value = $field->nodeValue;
+                // заменяем для виключателя
+                if ($f_name == 'BinaryState') {
+                    $f_name = 'status';
+                }
+                // убираем все значения с NOT_IMPLEMENTED
+                if ($value=='NOT_IMPLEMENTED') {
+                    $value='';
+                }
+                if ($field AND $value) {
+                    setGlobal($name_device . '.' . $f_name, $value);
+                }
             }
         }
     }
