@@ -103,11 +103,11 @@ while (1) {
 			// disable fild SinkProtocolInfo
 			if ($f_name=='SinkProtocolInfo') {
                 $value='';
-            }			// disable not implemented
+            }			
+			// disable not implemented
 			if ($value=='NOT_IMPLEMENTED') {
                 $value='';
             }
-			SinkProtocolInfo
             if ($field AND $value) {
                 setGlobal($name_device . '.' . $f_name, $value);
             }
