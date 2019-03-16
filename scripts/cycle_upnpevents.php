@@ -45,7 +45,7 @@ $socket = socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create socket
 socket_bind($socket, getLocalIp() , 54345) or die("Could not bind to socket\n");
 socket_listen($socket, 20840) or die("Could not set up socket listener\n");
 while (1) {
-    if (time() - $checked_time > 10) {
+    if (time() - $checked_time > 5*60) {
         $checked_time = time();
         setGlobal((str_replace('.php', '', basename(__FILE__))) . 'Run', time() , 1);
     }
