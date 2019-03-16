@@ -100,6 +100,9 @@ while (1) {
             if ($f_name == 'BinaryState') {
                 $f_name = 'status';
             }
+            if ($value=='NOT_IMPLEMENTED') {
+                $value='';
+            }
             if ($field AND $value) {
                 setGlobal($name_device . '.' . $f_name, $value);
             }
