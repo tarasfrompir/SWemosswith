@@ -23,7 +23,8 @@ function SWemosRelays() {
 * @access private
 */
  function install($data='') {
-  setGlobal('cycle_upnpevents','start'); //- запуск
+  setGlobal('cycle_upnpevents','stop'); //- запуск
+  setGlobal('cycle_upnpeventsDisabled','1'); - Для запрета автозапуска (по-умолчанию он всегда разрешён)
   //setGlobal('cycle_upnpevents','1'); //- Для включения авто-восстановления (по-умолчанию он всегда выключен)
   parent::install();
   $rec = SQLSelectOne("SELECT * FROM project_modules WHERE NAME = '" . $this->name . "'");
