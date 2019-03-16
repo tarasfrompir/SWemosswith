@@ -100,12 +100,12 @@ while (1) {
             if ($f_name == 'BinaryState') {
                 $f_name = 'status';
             }
-			// disable fild SinkProtocolInfo
-			if ($f_name=='SinkProtocolInfo') {
+            // disable fild SinkProtocolInfo
+            if ($f_name=='SinkProtocolInfo') {
                 $value='';
             }			
-			// disable not implemented
-			if ($value=='NOT_IMPLEMENTED') {
+            // disable not implemented
+            if ($value=='NOT_IMPLEMENTED') {
                 $value='';
             }
             if ($field AND $value) {
