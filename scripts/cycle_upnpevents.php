@@ -100,9 +100,14 @@ while (1) {
             if ($f_name == 'BinaryState') {
                 $f_name = 'status';
             }
-            if ($value=='NOT_IMPLEMENTED') {
+			// disable fild SinkProtocolInfo
+			if ($f_name=='SinkProtocolInfo') {
+                $value='';
+            }			// disable not implemented
+			if ($value=='NOT_IMPLEMENTED') {
                 $value='';
             }
+			SinkProtocolInfo
             if ($field AND $value) {
                 setGlobal($name_device . '.' . $f_name, $value);
             }
