@@ -7,8 +7,8 @@ set_time_limit(0);
 $checked_time = 0;
 include_once ("./load_settings.php");
 include_once (DIR_MODULES . "control_modules/control_modules.class.php");
-$ctl = new control_modules();
 
+$ctl = new control_modules();
 echo date("H:i:s") . " running " . basename(__FILE__) . PHP_EOL;
 DebMes('Start');
 // берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
@@ -43,76 +43,65 @@ foreach($subscribs as $field) {
 // create socket
 $socket = socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create socket\n");
 socket_bind($socket, getLocalIp() , 54345) or die("Could not bind to socket\n");
-socket_listen($socket, 10240) or die("Could not set up socket listener\n");
+socket_listen($socket, 20840) or die("Could not set up socket listener\n");
 while (1) {
-    if (time() - $checked_time > 6*60) {
+    if (time() - $checked_time > 10) {
         $checked_time = time();
         setGlobal((str_replace('.php', '', basename(__FILE__))) . 'Run', time() , 1);
-
-        // get answer
-        $spawn = socket_accept($socket) or die("Could not accept incoming connection\n");
-        // read client
-        $input = @socket_read($spawn, 10240);
-    
-        socket_close($spawn);
-        // ishem imya ustroystva oni otragautsya v notyfy
-        $name_device = substr($input, strpos($input, "NOTIFY") + 6);
-        $name_device = substr($name_device, 0, strpos($name_device, "HTTP/1.1"));
-        $name_device = str_ireplace("/", "", $name_device);
-        $name_device = trim($name_device);
-        DebMes('notyfy get name ' . $name_device);
-        // berem telo soobsheniya
-        // regem zagolovki
-        $input = substr($input, strpos($input, "\r\n\r\n") + 4);
-    
-        // преобразовываем дочерние обьекты
-        // add \r\n
-        $input = str_ireplace("/&gt;", "/&gt;\r\n", $input);
-        $input = str_ireplace("&gt;&lt;", "&gt;\r\n&lt;", $input);
-    
-       // preobrazoval vutrenniye polya
-        $input = preg_replace('/(&lt;)(.*) val="(.*)("\/&gt;)/', '<$2>$3</$2>', $input); 
-        // ubiraem ostachi kavichek
-        $input = str_ireplace("&gt;", ">", $input);
-        $input = str_ireplace("&lt;", "<", $input);
-        // remontiruem ostachu poley
-        $input = preg_replace('/(<)(.*) val="(.*)(">)/', '<$2>$3', $input); 
-    
-    
-        // remontiruem volume svoystvo
-        $input = preg_replace('/<Volume (.*)="(.*)">(.*)<\/Volume channel="(.*)">/', '<Volume_$2>$3</Volume_$2>', $input);    
-        // remontiruem Mute svoystvo
-        $input = preg_replace('/<Mute (.*)="(.*)">(.*)<\/Mute channel="(.*)">/', '<Mute_$2>$3</Mute_$2>', $input); 
-    
-        // ubiraem \r\n  obyazatelno v konce
-        $input = str_ireplace("\r\n", "", $input);  
-    
-        //DebMes('telo  - ' . $input);   
-    
-        if (strlen($input) > 0) {
-            // создаем хмл документ
-            $doc = new DOMDocument();
-            $doc->loadXML($input);
-            
-            // poluchem spisok elementov
-            $xpath = new DOMXpath($doc);
-            $nodes = $xpath->query('//*');
-            // berem ih znacheniya
-            foreach($nodes as $node) {
-                $f_name = $node->nodeName;
-                $field = $doc->getElementsByTagName($f_name) [0];
-                $value = $field->nodeValue;
-                // заменяем для виключателя
-                if ($f_name == 'BinaryState') {
-                    $f_name = 'status';
-                }
-                // убираем все значения с NOT_IMPLEMENTED
-                if ($value=='NOT_IMPLEMENTED') {
-                    $value='';
-                }
-                if ($field AND $value) {
-                    setGlobal($name_device . '.' . $f_name, $value);
-                }
+    }
+    // get answer
+    $spawn = socket_accept($socket) or die("Could not accept incoming connection\n");
+    // read client
+    $input = @socket_read($spawn, 20840);
+    //DebMes('telo  - ' . $input);
+    socket_close($spawn);
+    // ishem imya ustroystva oni otragautsya v notyfy
+    $name_device = substr($input, strpos($input, "NOTIFY") + 6);
+    $name_device = substr($name_device, 0, strpos($name_device, "HTTP/1.1"));
+    $name_device = str_ireplace("/", "", $name_device);
+    $name_device = trim($name_device);
+    DebMes('notyfy from device ' . $name_device);
+    // berem telo soobsheniya
+    // regem zagolovki
+    $input = substr($input, strpos($input, "\r\n\r\n") + 4);
+    if (strlen($input) > 0) {
+        if (strpos($input, '&gt;') !== false) {
+            // преобразовываем дочерние обьекты
+            // add \r\n
+            $input = str_ireplace("/&gt;", "/&gt;\r\n", $input);
+            $input = str_ireplace("&gt;&lt;", "&gt;\r\n&lt;", $input);
+            // preobrazoval vutrenniye polya
+            $input = preg_replace('/(&lt;)(.*) val="(.*)("\/&gt;)/', '<$2>$3</$2>', $input);
+            // ubiraem ostachi kavichek
+            $input = str_ireplace("&gt;", ">", $input);
+            $input = str_ireplace("&lt;", "<", $input);
+            // remontiruem ostachu poley
+            $input = preg_replace('/(<)(.*) val="(.*)(">)/', '<$2>$3', $input);
+            // remontiruem volume svoystvo
+            $input = preg_replace('/<Volume (.*)="(.*)">(.*)<\/Volume channel="(.*)">/', '<Volume_$2>$3</Volume_$2>', $input);
+            // remontiruem Mute svoystvo
+            $input = preg_replace('/<Mute (.*)="(.*)">(.*)<\/Mute channel="(.*)">/', '<Mute_$2>$3</Mute_$2>', $input);
+            // ubiraem \r\n  obyazatelno v konce
+            $input = str_ireplace("\r\n", "", $input);
+        }
+        //DebMes('telo  - ' . $input);
+        // создаем хмл документ
+        $doc = new DOMDocument();
+        $doc->loadXML($input);
+        // poluchem spisok elementov
+        $xpath = new DOMXpath($doc);
+        $nodes = $xpath->query('//*');
+        // berem ih znacheniya
+        foreach($nodes as $node) {
+            $f_name = $node->nodeName;
+            $field = $doc->getElementsByTagName($f_name) [0];
+            $value = $field->nodeValue;
+            // заменяем для виключателя
+            if ($f_name == 'BinaryState') {
+                $f_name = 'status';
+            }
+            if ($field AND $value) {
+                setGlobal($name_device . '.' . $f_name, $value);
             }
         }
     }
@@ -128,14 +117,15 @@ DebMes("Unexpected close of cycle: " . basename(__FILE__));
 // ////////////////////section for internal function////////////////////////////////////////////
 // берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
 // впредь создаем обязательно такое поле для УПНП устройства
-function get_all_upnp_devices() {
-$out = array();
-$sql = "SELECT ID, TITLE FROM objects where ID in (SELECT OBJECT_ID FROM properties Where TITLE ='UPNPADDRESS') or CLASS_ID in (SELECT CLASS_ID FROM properties Where TITLE ='UPNPADDRESS')";
-$objects=SQLSelect($sql);
-foreach( $objects as $object ) {
-    $out [$object['ID']] = $object['TITLE'];
-   }
-return $out;
+function get_all_upnp_devices()
+{
+    $out = array();
+    $sql = "SELECT ID, TITLE FROM objects where ID in (SELECT OBJECT_ID FROM properties Where TITLE ='UPNPADDRESS') or CLASS_ID in (SELECT CLASS_ID FROM properties Where TITLE ='UPNPADDRESS')";
+    $objects = SQLSelect($sql);
+    foreach($objects as $object) {
+        $out[$object['ID']] = $object['TITLE'];
+    }
+    return $out;
 }
 // функция получения CONTROL_ADDRESS при его отсутствии или его ге правильности
 function search_controlURL($ip_addres = '255.255.255.255', $device)
@@ -238,4 +228,4 @@ function subscribe($fields = '')
     fclose($fp);
     return $out;
 }
-// /////////////////
+///////////////////
