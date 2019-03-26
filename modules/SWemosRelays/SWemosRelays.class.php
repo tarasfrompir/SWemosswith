@@ -25,9 +25,12 @@ function SWemosRelays() {
 * @access private
 */
  function install($data='') {
-  setGlobal('cycle_upnpevents','start'); //- запуск
-  //setGlobal('cycle_upnpeventsDisabled','1'); - Для запрета автозапуска (по-умолчанию он всегда разрешён)
-  //setGlobal('cycle_upnpevents','1'); //- Для включения авто-восстановления (по-умолчанию он всегда выключен)
+  setGlobal('cycle_upnpeventsControl','start'); //- запуск
+  //setGlobal('cycle_pingControl','stop'); - Остановка
+  //setGlobal('cycle_pingControl','start'); - запуск
+  //setGlobal('cycle_pingControl','restart'); - рестарт
+  //setGlobal('cycle_pingDisabled','1'); - Для запрета автозапуска (по-умолчанию он всегда разрешён)
+  //setGlobal('cycle_pingAutoRestart','1'); - Для включения авто-восстановления (по-умолчанию он всегда выключен)
   parent::install();
   $rec = SQLSelectOne("SELECT * FROM project_modules WHERE NAME = '" . $this->name . "'");
   $rec['HIDDEN'] = 1;
@@ -40,7 +43,7 @@ function SWemosRelays() {
 *
 */
  function uninstall() {
-  setGlobal('cycle_upnpevents','stop'); //- остановка цикла
+  setGlobal('cycle_upnpeventsControl','stop'); //- остановка цикла
   // удаляем файлы модуля-дополнения
     if ($file = fopen("file_list.txt", "r")) {
     while(!feof($file)) {
