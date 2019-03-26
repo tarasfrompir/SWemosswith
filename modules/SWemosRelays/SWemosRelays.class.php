@@ -50,8 +50,11 @@ function SWemosRelays() {
   sleep (2);
   // удаляем файлы модуля-дополнения
     if ($file = fopen(DIR_MODULES.'SWemosRelays/file_list.txt', "r")) {
+      DebMes ('file nayden');
     while(!feof($file)) {
         $line = preg_replace('/\p{Cc}+/u', '', fgets($file));
+        DebMes ('line -'.$line);
+        DebMes (ROOT.$line);
         @unlink(ROOT.$line);
     }
     fclose($file);
