@@ -25,16 +25,18 @@ function SWemosRelays() {
 * @access private
 */
  function install($data='') {
+  parent::install();
+  $rec = SQLSelectOne("SELECT * FROM project_modules WHERE NAME = '" . $this->name . "'");
+  $rec['HIDDEN'] = 1;
+  SQLUpdate('project_modules', $rec);
+
+  // запускаем цикл
   setGlobal('cycle_upnpeventsControl','start'); //- запуск
   //setGlobal('cycle_pingControl','stop'); - Остановка
   //setGlobal('cycle_pingControl','start'); - запуск
   //setGlobal('cycle_pingControl','restart'); - рестарт
   //setGlobal('cycle_pingDisabled','1'); - Для запрета автозапуска (по-умолчанию он всегда разрешён)
   //setGlobal('cycle_pingAutoRestart','1'); - Для включения авто-восстановления (по-умолчанию он всегда выключен)
-  parent::install();
-  $rec = SQLSelectOne("SELECT * FROM project_modules WHERE NAME = '" . $this->name . "'");
-  $rec['HIDDEN'] = 1;
-  SQLUpdate('project_modules', $rec);
  }
 /**
 * Uninstall
