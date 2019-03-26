@@ -49,13 +49,11 @@ function SWemosRelays() {
   // дожидаемся остановки цикла
   sleep (2);
   // удаляем файлы модуля-дополнения
-    if ($file = fopen(DIR_MODULES.'SWemosRelays/file_list.txt', "r")) {
-      DebMes ('file nayden');
+  if ($file = fopen(DIR_MODULES.'/SWemosRelays/file_list.txt', "r")) {
     while(!feof($file)) {
         $line = preg_replace('/\p{Cc}+/u', '', fgets($file));
-        DebMes ('line -'.$line);
+        @unlink(realpath(ROOT.$line));
         DebMes (ROOT.$line);
-        @unlink(ROOT.$line);
     }
     fclose($file);
   }
