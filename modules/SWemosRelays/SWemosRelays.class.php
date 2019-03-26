@@ -46,6 +46,8 @@ function SWemosRelays() {
 */
  function uninstall() {
   setGlobal('cycle_upnpeventsControl','stop'); //- остановка цикла
+  // дожидаемся остановки цикла
+  sleep (2);
   // удаляем файлы модуля-дополнения
     if ($file = fopen("file_list.txt", "r")) {
     while(!feof($file)) {
