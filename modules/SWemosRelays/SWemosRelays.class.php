@@ -53,7 +53,6 @@ function SWemosRelays() {
     while(!feof($file)) {
         $line = preg_replace('/\p{Cc}+/u', '', fgets($file));
         @unlink(realpath(ROOT.$line));
-      DebMes (realpath(ROOT.$line));
     }
     fclose($file);
   }
