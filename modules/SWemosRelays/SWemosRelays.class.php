@@ -52,7 +52,7 @@ function SWemosRelays() {
     if ($file = fopen(DIR_MODULES.'/SWemosRelays/file_list.txt', "r")) {
     while(!feof($file)) {
         $line = preg_replace('/\p{Cc}+/u', '', fgets($file));
-        @unlink(realpath(ROOT.$line));
+        @unlink(ROOT.$line);
     }
     fclose($file);
   }
