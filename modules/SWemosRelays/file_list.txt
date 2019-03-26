@@ -1,10 +1,10 @@
-/modules/devices/SWemosRelays_switch.php
-/modules/devices/SWemosRelays_turnOff.php
-/modules/devices/SWemosRelays_turnOn.php
-/modules/devices/classes_for_addons/Wemosswitch.php
-/modules/devices/addons/SWemos_commands.php
-/modules/devices/addons/SWemos_structure.php
-/templates/classes/views/SWemosRelays.html
-/languages/SWemosRelays_ru.php
-/scripts/no _work_cycle_upnpevents.php
-/scripts/cycle_upnpevents.php
+modules/devices/SWemosRelays_switch.php
+modules/devices/SWemosRelays_turnOff.php
+modules/devices/SWemosRelays_turnOn.php
+modules/devices/classes_for_addons/Wemosswitch.php
+modules/devices/addons/SWemos_commands.php
+modules/devices/addons/SWemos_structure.php
+templates/classes/views/SWemosRelays.html
+languages/SWemosRelays_ru.php
+scripts/no _work_cycle_upnpevents.php
+scripts/cycle_upnpevents.php
