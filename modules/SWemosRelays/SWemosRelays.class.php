@@ -49,7 +49,7 @@ function SWemosRelays() {
   // дожидаемся остановки цикла
   sleep (2);
   // удаляем файлы модуля-дополнения
-    if ($file = fopen("file_list.txt", "r")) {
+    if ($file = fopen(MODULES.'/'.$this->name."/file_list.txt", "r")) {
     while(!feof($file)) {
         $line = preg_replace('/\p{Cc}+/u', '', fgets($file));
         @unlink(realpath(ROOT.$line));
