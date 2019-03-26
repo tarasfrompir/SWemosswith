@@ -6,5 +6,7 @@ modules/devices/addons/SWemos_commands.php
 modules/devices/addons/SWemos_structure.php
 templates/classes/views/SWemosRelays.html
 languages/SWemosRelays_ru.php
+languages/SWemosRelays_ua.php
+languages/SWemosRelays_default.php
 scripts/no _work_cycle_upnpevents.php
 scripts/cycle_upnpevents.php
