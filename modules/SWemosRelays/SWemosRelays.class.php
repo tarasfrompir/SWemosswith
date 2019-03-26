@@ -8,8 +8,10 @@ class SWemosRelays extends module {
 *
 * @access private
 */
+  
 function SWemosRelays() {
   $this->name="SWemosRelays";
+  @include_once(ROOT . 'languages/' . $this->name . '_' . SETTINGS_SITE_LANGUAGE . '.php');
   $this->title=LANG_SWemosRelays_MODULE_NAME;
   $this->module_category="<#LANG_SECTION_DEVICES#>";
   $this->checkInstalled();
