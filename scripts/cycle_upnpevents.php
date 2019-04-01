@@ -14,7 +14,7 @@ DebMes('Start');
 // берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
 // впредь создаем обязательно такое поле для УПНП устройства
 $devices = get_all_upnp_devices();
-// DebMes (serialize ($devices));
+DebMes (serialize ($devices));
 // проверяем устройства на online i pravilnost UPNPADDRESS
 $controladdress = array();
 foreach($devices as $device) {
@@ -24,7 +24,7 @@ foreach($devices as $device) {
         $controladdress = array_merge($controladdress, $out);
     }
 }
-// DebMes (serialize ($controladdress));
+DebMes (serialize ($controladdress));
 // get subscriptions fields
 $subscribs = array();
 // poluchem polya
@@ -33,11 +33,11 @@ foreach($controladdress as $address) {
     $out = get_subscription_filds($address);
     $subscribs = array_merge($subscribs, $out);
 }
-// DebMes (serialize ($subscribs));
+DebMes (serialize ($subscribs));
 // subscribe to events
 foreach($subscribs as $field) {
     subscribe($field);
-    // DebMes (serialize ($field));
+    DebMes (serialize ($field));
 }
 // main cycle
 // create socket
