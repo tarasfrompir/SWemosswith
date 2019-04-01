@@ -53,7 +53,7 @@ while (1) {
     $spawn = socket_accept($socket) or die("Could not accept incoming connection\n");
     // read client
     $input = @socket_read($spawn, 20840);
-    //DebMes('telo  - ' . $input);
+    DebMes('telo  - ' . $input);
     socket_close($spawn);
     // ishem imya ustroystva oni otragautsya v notyfy
     $name_device = substr($input, strpos($input, "NOTIFY") + 6);
