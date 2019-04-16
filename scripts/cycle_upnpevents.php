@@ -65,7 +65,7 @@ while (1) {
     // regem zagolovki
     $input = substr($input, strpos($input, "\r\n\r\n") + 4);
     if (strlen($input) > 0) {
-        DebMes('telo  - ' . $input);
+        //DebMes('telo  - ' . $input);
         // создаем хмл документ
         $doc = new DOMDocument();
         $doc->loadXML($input);
