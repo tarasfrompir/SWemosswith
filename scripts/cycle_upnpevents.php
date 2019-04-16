@@ -37,7 +37,7 @@ foreach($controladdress as $address) {
 // subscribe to events
 foreach($subscribs as $field) {
     subscribe($field);
-    DebMes (serialize ($field));
+    //DebMes (serialize ($field));
 }
 // main cycle
 // create socket
@@ -53,7 +53,7 @@ while (1) {
     $spawn = socket_accept($socket) or die("Could not accept incoming connection\n");
     // read client
     $input = @socket_read($spawn, 20840);
-    DebMes('telo  - ' . $input);
+    //DebMes('telo  - ' . $input);
     socket_close($spawn);
     // ishem imya ustroystva oni otragautsya v notyfy
     $name_device = substr($input, strpos($input, "NOTIFY") + 6);
@@ -65,32 +65,29 @@ while (1) {
     // regem zagolovki
     $input = substr($input, strpos($input, "\r\n\r\n") + 4);
     if (strlen($input) > 0) {
-        if (strpos($input, '&gt;') !== false) {
-            // преобразовываем дочерние обьекты
-            // add \r\n
-            $input = str_ireplace("/&gt;", "/&gt;\r\n", $input);
-            $input = str_ireplace("&gt;&lt;", "&gt;\r\n&lt;", $input);
-            // preobrazoval vutrenniye polya
-            $input = preg_replace('/(&lt;)(.*) val="(.*)("\/&gt;)/', '<$2>$3</$2>', $input);
-            // ubiraem ostachi kavichek
-            $input = str_ireplace("&gt;", ">", $input);
-            $input = str_ireplace("&lt;", "<", $input);
-            // remontiruem ostachu poley
-            $input = preg_replace('/(<)(.*) val="(.*)(">)/', '<$2>$3', $input);
-            // remontiruem volume svoystvo
-            $input = preg_replace('/<Volume (.*)="(.*)">(.*)<\/Volume channel="(.*)">/', '<Volume_$2>$3</Volume_$2>', $input);
-            // remontiruem Mute svoystvo
-            $input = preg_replace('/<Mute (.*)="(.*)">(.*)<\/Mute channel="(.*)">/', '<Mute_$2>$3</Mute_$2>', $input);
-            // ubiraem \r\n  obyazatelno v konce
-            $input = str_ireplace("\r\n", "", $input);
-        }
-        //DebMes('telo  - ' . $input);
+        DebMes('telo  - ' . $input);
         // создаем хмл документ
         $doc = new DOMDocument();
         $doc->loadXML($input);
+
+		// check the last change answer
+		$last_change = $doc->getElementsByTagName('LastChange') [0];
+		$value = $last_change->nodeValue;
+		if ($value) {
+			//DebMes ('value - '.$value);
+			$value = preg_replace('/<([[:word:]]+) val="(\d*)"/', '<$1>$2</$1', $value);
+			$value = preg_replace('/<([[:word:]]+) [[:word:]]+="([[:word:]]+)" val="(\d*)"\//', '<$1$2>$3</$1$2', $value);
+			$value = str_replace("></InstanceID>", ">", $value);
+
+			DebMes ('value - '.$value);
+			$doc->loadXML($value);
+		}
+		
+
         // poluchem spisok elementov
         $xpath = new DOMXpath($doc);
         $nodes = $xpath->query('//*');
+
         // berem ih znacheniya
         foreach($nodes as $node) {
             $f_name = $node->nodeName;
@@ -99,6 +96,14 @@ while (1) {
             // заменяем для виключателя
             if ($f_name == 'BinaryState') {
                 $f_name = 'status';
+			}
+			// disable fild LastChange
+			if ($f_name == 'LastChange') {
+                $value='';
+            }
+			// disable fild Event
+			if ($f_name == 'Event') {
+                $value='';
             }
             // disable fild SinkProtocolInfo
             if ($f_name=='SinkProtocolInfo') {
