@@ -10,7 +10,7 @@ include_once (DIR_MODULES . "control_modules/control_modules.class.php");
 
 $ctl = new control_modules();
 echo date("H:i:s") . " running " . basename(__FILE__) . PHP_EOL;
-DebMes('Start');
+DebMes('Start UPNP cicle');
 // берем все обьекты со свойством UPNPADDRESS (это показатель того что это УПНП устройство)
 // впредь создаем обязательно такое поле для УПНП устройства
 $devices = get_all_upnp_devices();
