@@ -74,9 +74,11 @@ while (1) {
 		$last_change = $doc->getElementsByTagName('LastChange') [0];
 		$value = $last_change->nodeValue;
 		if ($value) {
-			//DebMes ('value - '.$value);
 			$value = preg_replace('/<([[:word:]]+) val="(\d*)"/', '<$1>$2</$1', $value);
 			$value = preg_replace('/<([[:word:]]+) [[:word:]]+="([[:word:]]+)" val="(\d*)"\//', '<$1$2>$3</$1$2', $value);
+			$value = preg_replace('/<([[:word:]]+) val="(\d+:\d+:\d+)"\//', '<$1>$2</$1', $value);
+			$value = preg_replace('/<([[:word:]]+) val="([[:word:]]+)"\/>/', '<$1>$2</$1>', $value);
+			$value = preg_replace('/<([[:word:]]+) val="([^"]+)"\/>/', '<$1>$2</$1>', $value);
 			$value = str_replace("></InstanceID>", ">", $value);
 
 			DebMes ('value - '.$value);
@@ -113,7 +115,7 @@ while (1) {
             if ($value=='NOT_IMPLEMENTED') {
                 $value='';
             }
-            if ($field AND $value) {
+            if ($field AND $value!='') {
                 setGlobal($name_device . '.' . $f_name, $value);
             }
         }
