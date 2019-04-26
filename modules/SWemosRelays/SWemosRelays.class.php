@@ -9,7 +9,7 @@ class SWemosRelays extends module {
 * @access private
 */
   
-function SWemosRelays() {
+function __construct()() {
   $this->name="SWemosRelays";
   @include_once(ROOT . 'languages/' . $this->name . '_' . SETTINGS_SITE_LANGUAGE . '.php');
   $this->title=LANG_SWemosRelays_MODULE_NAME;
