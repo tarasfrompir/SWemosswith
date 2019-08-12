@@ -42,8 +42,10 @@ foreach($subscribs as $field) {
 // main cycle
 // create socket
 $socket = socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create socket\n");
+socket_set_option($socket,SOL_SOCKET, SO_RCVTIMEO, array("sec"=>5, "usec"=>0));
 socket_bind($socket, getLocalIp() , 54345) or die("Could not bind to socket\n");
 socket_listen($socket, 20840) or die("Could not set up socket listener\n");
+
 while (1) {
     if (time() - $checked_time > 5*60) {
         $checked_time = time();
